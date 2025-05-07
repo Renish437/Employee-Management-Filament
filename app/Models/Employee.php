@@ -8,7 +8,7 @@ class Employee extends Model
 {
     //
     protected $fillable = [
-        'name',
+        'first_name', 'middle_name', 'last_name',
         'email',
         'phone',
         'address',
@@ -16,6 +16,9 @@ class Employee extends Model
         'state_id',
         'city_id',
         'department_id',
+        'zip_code',
+        'date_of_birth',
+        'date_hired',
     ];
     public function department()
     {

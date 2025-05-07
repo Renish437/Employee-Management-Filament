@@ -41,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('2rem')
             
             ->favicon(asset('images/logo-1.jpg'))
+            ->sidebarCollapsibleOnDesktop()
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,

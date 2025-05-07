@@ -4,15 +4,21 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
+use App\Models\City;
 use App\Models\Employee;
+use App\Models\State;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Collection;
 
 class EmployeeResource extends Resource
 {
@@ -41,41 +47,47 @@ class EmployeeResource extends Resource
                 ->required()
                 ->maxLength(255),
                ])->columns(3),
-               Section::make('User Contact Details')
-               ->description('Put the user details here')
-               ->schema([
-                Forms\Components\TextInput::make('first_name')
-                ->required()
-                ->maxLength(255),
-                
-            Forms\Components\TextInput::make('middle_name')
-                ->required()
-                ->maxLength(255),
-            Forms\Components\TextInput::make('last_name')
-                ->required()
-                ->maxLength(255),
-               ])->columns(3),
+              
                Section::make('Select Address')
                ->description('Put the user address here')
                ->schema([
                 Forms\Components\Select::make('country_id')
                 ->required()
                 ->label('Country')
+                ->relationship('country', 'name')
                 ->searchable()
                 ->preload()
-                ->relationship('country', 'name'),
+                ->afterStateUpdated(function(Set $set){
+                    $set('state_id',null);
+                    $set('city_id',null);
+                })
+                ->live(),
             Forms\Components\Select::make('state_id')
+                ->options(fn(Get $get): Collection =>State::query()
+                ->where('country_id',$get('country_id'))
+                ->get()
+            
+                ->pluck('name', 'id')
+
+                )
+                ->afterStateUpdated(fn(Set $set)=>$set('city_id',null))
                 ->required()
                 ->label('State')
                 ->searchable()
                 ->preload()
-                ->relationship('state', 'name'),
-            Forms\Components\Select::make('city_id')
+                ->live()
+                ,
+                Forms\Components\Select::make('city_id')
                 ->required()
                 ->label('City')
                 ->searchable()
                 ->preload()
-                ->relationship('city', 'name'),
+                ->options(fn(Get $get): Collection =>City::query()
+                ->where('state_id',$get('state_id'))
+                ->get()
+                ->pluck('name', 'id')
+            )
+            ->live(),
             Forms\Components\Select::make('department_id')
                 ->required()
                 ->label('Department')
@@ -101,9 +113,14 @@ class EmployeeResource extends Resource
                 ->description('Put the user dates here')
                 ->schema([
                     Forms\Components\DatePicker::make('date_of_birth')
-                    ->required(),
+                    ->native(false)
+                    ->required()
+                    ->displayFormat('d/m/Y'),
                 Forms\Components\DatePicker::make('date_hired')
                     ->required()
+                    ->native(false)
+                    
+                    ->displayFormat('d/m/Y')
                     ,
                 ])->columns(2),
                 
@@ -132,14 +149,14 @@ class EmployeeResource extends Resource
                 Tables\Columns\TextColumn::make('date_hired')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('country_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('country.name')
+                    
                     ->sortable(),
-                Tables\Columns\TextColumn::make('state_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('state.name')
+                    ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('city_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('city.name')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('department_id')
                     ->numeric()
