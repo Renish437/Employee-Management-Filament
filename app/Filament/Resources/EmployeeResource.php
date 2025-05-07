@@ -7,13 +7,22 @@ use App\Filament\Resources\EmployeeResource\RelationManagers;
 use App\Models\City;
 use App\Models\Employee;
 use App\Models\State;
+use Carbon\Carbon;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Infolists\Components\Section as ComponentsSection;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\Indicator;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -132,20 +141,25 @@ class EmployeeResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('first_name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('middle_name')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('last_name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('address')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('zip_code')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('date_of_birth')
                     ->date()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('date_hired')
                     ->date()
                     ->sortable(),
@@ -158,8 +172,10 @@ class EmployeeResource extends Resource
                 Tables\Columns\TextColumn::make('city.name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('department_id')
+                Tables\Columns\TextColumn::make('department.name')
                     ->numeric()
+                    ->label('Department')
+                    
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -171,8 +187,82 @@ class EmployeeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
-            ])
+                SelectFilter::make('department_id')
+                    ->relationship('department', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->label('Filter By Department')
+                    ->indicator('Department'),
+            
+                Filter::make('date_hired')
+                    ->form([
+                        DatePicker::make('date_hired_from')->label('Date Hired From'),
+                        DatePicker::make('date_hired_until')->label('Date Hired Until')
+                            ->default(now()),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['date_hired_from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('date_hired', '>=', $date)
+                            )
+                            ->when(
+                                $data['date_hired_until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('date_hired', '<=', $date)
+                            );
+                    })
+                    ->label('Date Hired')
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+            
+                        if ($data['date_hired_from'] ?? null) {
+                            $indicators[] = Indicator::make('Hired from ' . Carbon::parse($data['date_hired_from'])->toFormattedDateString())
+                                ->removeField('date_hired_from');
+                        }
+            
+                        if ($data['date_hired_until'] ?? null) {
+                            $indicators[] = Indicator::make('Hired until ' . Carbon::parse($data['date_hired_until'])->toFormattedDateString())
+                                ->removeField('date_hired_until');
+                        }
+            
+                        return $indicators;
+                    }),
+            
+                Filter::make('date_of_birth')
+                    ->form([
+                        DatePicker::make('dob_from')->label('Date of Birth From'),
+                        DatePicker::make('dob_until')->label('Date of Birth Until')
+                            ->default(now()),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['dob_from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('date_of_birth', '>=', $date)
+                            )
+                            ->when(
+                                $data['dob_until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('date_of_birth', '<=', $date)
+                            );
+                    })
+                    ->label('Date of Birth')
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+            
+                        if ($data['dob_from'] ?? null) {
+                            $indicators[] = Indicator::make('Born from ' . Carbon::parse($data['dob_from'])->toFormattedDateString())
+                                ->removeField('dob_from');
+                        }
+            
+                        if ($data['dob_until'] ?? null) {
+                            $indicators[] = Indicator::make('Born until ' . Carbon::parse($data['dob_until'])->toFormattedDateString())
+                                ->removeField('dob_until');
+                        }
+            
+                        return $indicators;
+                    }),
+                ],layout: FiltersLayout::AboveContent)->filtersFormColumns(3)
+            
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
@@ -183,7 +273,35 @@ class EmployeeResource extends Resource
                 ]),
             ]);
     }
-
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist->schema([
+            ComponentsSection::make('User Name')->schema([
+                TextEntry::make('first_name')->label('First Name'),
+                TextEntry::make('middle_name')->label('Middle Name'),
+                TextEntry::make('last_name')->label('Last Name'),
+            ])->columns(3),
+            ComponentsSection::make('User Address Details')->schema([
+                TextEntry::make('country.name')->label('Country'),
+                TextEntry::make('state.name')->label('State'),
+                TextEntry::make('city.name')->label('City'),
+                TextEntry::make('department.name')->label('Department'),
+            ])->columns(2),
+            ComponentsSection::make('User Contact Details')->schema([
+                TextEntry::make('email')->label('Email'),
+                TextEntry::make('address')->label('Address'),
+                TextEntry::make('zip_code')->label('Zip Code'),
+            ])->columns(3),
+            ComponentsSection::make('Dates')->schema([
+                TextEntry::make('date_of_birth')->label('Date of Birth'),
+                TextEntry::make('date_hired')->label('Date Hired'),
+                TextEntry::make('created_at')->label('Created At'),
+                TextEntry::make('updated_at')->label('Updated At'),
+            ])->columns(2),
+           
+        ])->columns(2);
+    }
+    
     public static function getRelations(): array
     {
         return [
@@ -196,7 +314,7 @@ class EmployeeResource extends Resource
         return [
             'index' => Pages\ListEmployees::route('/'),
             'create' => Pages\CreateEmployee::route('/create'),
-            'view' => Pages\ViewEmployee::route('/{record}'),
+            // 'view' => Pages\ViewEmployee::route('/{record}'),
             'edit' => Pages\EditEmployee::route('/{record}/edit'),
         ];
     }

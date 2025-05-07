@@ -7,6 +7,9 @@ use App\Filament\Resources\StateResource\RelationManagers;
 use App\Models\State;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists\Components\Section;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -34,7 +37,6 @@ class StateResource extends Resource
                 ->required()
                 ->searchable()
                 ->preload()
-                
                 ->relationship('country', 'name'),
                 Forms\Components\TextInput::make('name')
                     ->required()
@@ -47,9 +49,13 @@ class StateResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('country.name')
-                    ,
+                ->sortable()
+                    ->searchable(isIndividual: true)
+                    ->label('Country'),
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
+                ->sortable()
+                    ->searchable()
+                    ->label('State'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -58,12 +64,13 @@ class StateResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ])->defaultSort('country.name', 'asc')
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -71,6 +78,20 @@ class StateResource extends Resource
                 ]),
             ]);
     }
+    public static function infolist(Infolist $infolist): Infolist
+{
+    return $infolist
+        ->schema([
+            // ...
+           Section::make('State Details')
+           ->schema([
+            TextEntry::make('country.name')
+            ->label('Country'),
+            TextEntry::make('name')
+            ->label('State'),
+           ])->columns(2),
+        ]);
+}
 
     public static function getRelations(): array
     {
