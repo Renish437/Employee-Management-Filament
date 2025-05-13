@@ -4,8 +4,10 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CityResource\Pages;
 use App\Filament\Resources\CityResource\RelationManagers;
+use App\Filament\Resources\CityResource\RelationManagers\EmployeesRelationManager;
 use App\Models\City;
 use Filament\Forms;
+use Filament\Forms\Components\Section as ComponentsSection;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -28,11 +30,16 @@ class CityResource extends Resource
 
     protected static? string $navigationGroup = 'System Management';
     protected static ?int $navigationSort = 3;
+       protected static ?string $tenantOwnershipRelationshipName = 'team';
+    
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('state_id')
+               ComponentsSection::make('City Details')
+               ->columns(2)
+               ->schema([
+                    Forms\Components\Select::make('state_id')
                     ->required()
                     ->label('State')
                     ->searchable()
@@ -41,6 +48,7 @@ class CityResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
+               ])
             ]);
     }
 
@@ -95,6 +103,7 @@ class CityResource extends Resource
     {
         return [
             //
+            EmployeesRelationManager::class
         ];
     }
 
@@ -103,7 +112,7 @@ class CityResource extends Resource
         return [
             'index' => Pages\ListCities::route('/'),
             'create' => Pages\CreateCity::route('/create'),
-            // 'view' => Pages\ViewCity::route('/{record}'),
+            'view' => Pages\ViewCity::route('/{record}'),
             'edit' => Pages\EditCity::route('/{record}/edit'),
         ];
     }

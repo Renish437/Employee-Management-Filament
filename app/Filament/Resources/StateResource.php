@@ -2,10 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\CountryResource\RelationManagers\EmployeesRelationManager;
 use App\Filament\Resources\StateResource\Pages;
 use App\Filament\Resources\StateResource\RelationManagers;
+use App\Filament\Resources\StateResource\RelationManagers\CitiesRelationManager;
 use App\Models\State;
 use Filament\Forms;
+use Filament\Forms\Components\Section as ComponentsSection;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -24,7 +27,7 @@ class StateResource extends Resource
     protected static?string $navigationLabel = 'State';
 
     protected static? string $modelLabel = 'States';
-
+   protected static ?string $tenantOwnershipRelationshipName = 'team';
     protected static? string $navigationGroup = 'System Management';
     protected static ?int $navigationSort = 2;
 
@@ -32,7 +35,10 @@ class StateResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('country_id')
+                ComponentsSection::make('State Details')
+                ->columns(2)
+                ->schema([
+                    Forms\Components\Select::make('country_id')
                 ->label('Country')
                 ->required()
                 ->searchable()
@@ -41,6 +47,7 @@ class StateResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
+                ])
             ]);
     }
 
@@ -97,6 +104,9 @@ class StateResource extends Resource
     {
         return [
             //
+            EmployeesRelationManager::class,
+            CitiesRelationManager::class
+
         ];
     }
 

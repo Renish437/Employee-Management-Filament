@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Department;
 use App\Models\User;
 
 use Database\Seeders\StatesTableSeeder as SeedersStatesTableSeeder;
@@ -22,8 +23,12 @@ class DatabaseSeeder extends Seeder
         //     'name' => 'Test User',
         //     'email' => 'test@example.com',
         // ]);
-        // $this->call(CountriesTableSeeder::class);
-        // $this->call(SeedersStatesTableSeeder::class);
+        $this->call(CountriesTableSeeder::class);
+        $this->call(SeedersStatesTableSeeder::class);
         $this->call(CitiesTableSeeder::class);
+        Department::create([
+            'name' => 'React Js',
+
+        ]);
     }
 }

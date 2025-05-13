@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\CityResource\RelationManagers\EmployeesRelationManager;
 use App\Filament\Resources\DepartmentResource\Pages;
 use App\Filament\Resources\DepartmentResource\RelationManagers;
 use App\Models\Department;
 use Filament\Forms;
+use Filament\Forms\Components\Section as ComponentsSection;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -28,14 +30,27 @@ class DepartmentResource extends Resource
 
     protected static? string $navigationGroup = 'System Management';
     protected static ?int $navigationSort = 4;
+       protected static ?string $tenantOwnershipRelationshipName = 'team';
 
+       public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
+              ComponentsSection::make('Department Details')
+              ->columns(2)
+              ->schema([
+                    Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
+              ])
             ]);
     }
 
@@ -89,6 +104,7 @@ class DepartmentResource extends Resource
     {
         return [
             //
+            EmployeesRelationManager::class
         ];
     }
 

@@ -4,8 +4,11 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CountryResource\Pages;
 use App\Filament\Resources\CountryResource\RelationManagers;
+use App\Filament\Resources\CountryResource\RelationManagers\EmployeesRelationManager;
+use App\Filament\Resources\CountryResource\RelationManagers\StatesRelationManager;
 use App\Models\Country;
 use Filament\Forms;
+use Filament\Forms\Components\Section as ComponentsSection;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -27,6 +30,7 @@ class CountryResource extends Resource
     protected static? string $modelLabel = 'Employee Country';
 
     protected static? string $navigationGroup = 'System Management';
+       protected static ?string $tenantOwnershipRelationshipName = 'team';
 
     protected static ?int $navigationSort = 1;
     // protected static ?string $slug = 'employees-country'; url change
@@ -35,7 +39,10 @@ class CountryResource extends Resource
 
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
+               ComponentsSection::make('Country Details')
+               ->columns(2)
+               ->schema([
+                    Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('code')
@@ -45,6 +52,7 @@ class CountryResource extends Resource
                     ->required()
                     ->numeric()
                     ->maxLength(255),
+               ])
             ]);
     }
 
@@ -107,6 +115,8 @@ class CountryResource extends Resource
     {
         return [
             //
+            StatesRelationManager::class,
+            EmployeesRelationManager::class
         ];
     }
 
